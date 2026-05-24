@@ -160,6 +160,9 @@ def _do_promote(candidate_version: str, active_version: str, replay_version: str
     with open(MODEL_REGISTRY_PATH) as f:
         registry = json.load(f)
 
+    if registry["models"][candidate_version]["status"] == "active":
+        raise SystemExit(f"{candidate_version} is already active. Nothing to do.")
+
     now = datetime.now().isoformat(timespec="seconds")
 
     if active_version and active_version in registry["models"]:

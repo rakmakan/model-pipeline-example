@@ -132,6 +132,12 @@ def main():
         model_version = args.model_version
         config = load_and_validate(config_path)
 
+    # Guard before touching disk — fail fast if version already registered.
+    with open(MODEL_REGISTRY_PATH) as f:
+        registry = json.load(f)
+    if model_version in registry["models"]:
+        raise SystemExit(f"Model version {model_version} already exists in registry. Choose a different --model-version.")
+
     X_train, y_train = load_train(data_version)
     fraud_rate = y_train.mean()
     print(f"Training data: {len(X_train)} rows, {fraud_rate:.3%} fraud")

@@ -63,6 +63,9 @@ def run(predictions_path: str, feedback_path: str, version: str | None = None) -
     if version is None:
         version = _next_version(registry)
 
+    if version in registry.get("replay", {}).get("versions", {}):
+        raise ValueError(f"Replay version {version} already exists in registry.")
+
     out_dir = Path(f"data/replay/{version}")
     out_dir.mkdir(parents=True, exist_ok=True)
 
