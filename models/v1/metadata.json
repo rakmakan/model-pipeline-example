@@ -12,6 +12,6 @@
     "is_vpn_or_proxy",
     "profile_trust_score"
   ],
-  "threshold": null,
+  "threshold": 0.05,
   "created_at": "2026-05-24T14:41:16"
 }
