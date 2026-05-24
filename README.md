@@ -45,6 +45,11 @@ run_replay_pipe.py        # CLI for replay_pipeline
 config.json               # default training config (validated schema)
 data_registry.json        # data and replay version index
 model_registry.json       # model version index — status and pointers only
+
+starter/                  # original challenge files (reference only, not part of pipeline)
+  CHALLENGE.md
+  generate_data.py        # regenerates synthetic training data
+  simulate_production.py  # regenerates predictions.csv + feedback.csv
 ```
 
 ---
