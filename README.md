@@ -155,6 +155,22 @@ Reads the active model version from `model_registry.json`, loads the artifact, a
 .venv/bin/python -m pytest tests/ -v
 ```
 
+**83 tests, 0 failures.**
+
+| File | Tests | What it covers |
+|---|---|---|
+| `tests/test_schema.py` | 7 | Schema version detection, diff-style validation errors, all-violations-in-one-raise |
+| `tests/test_data_pipeline.py` | 11 | Stratified 70/15/15 split, fraud rate preservation, registry writes, duplicate version guard, reader contract |
+| `tests/test_replay_pipeline.py` | 12 | Prediction/feedback join, unclear verdict filtering, floor condition enforcement, registry writes, reader contract |
+| `tests/test_config.py` | 8 | Valid config passes, each invalid field raises, multiple errors collected in one raise |
+| `tests/test_preprocessor.py` | 8 | Mean/std after scaling, column/index preservation, unfitted guard, save/load roundtrip |
+| `tests/test_validator.py` | 7 | Lowest-threshold selection, unachievable target raises, threshold written to metadata, actual recall verified |
+| `tests/test_evaluator.py` | 11 | Metric formulas (recall, FPR, F1), AUC single-class warning not crash, report written, registry updated |
+| `tests/test_loader.py` | 7 | Load/score, missing artifact raises, threshold/features from metadata, **artifact snapshot isolation** |
+| `tests/test_promote.py` | 12 | Metric computation, McNemar's test, all-pass → PROMOTE, FPR guardrail → REJECT, recall floor, insufficient data/disagreements |
+
+The isolation test in `test_loader.py` is the most important: it modifies the packed artifact's `model_class.py` and verifies the loaded model uses the modified snapshot, not the current codebase. This is the core guarantee of the self-contained artifact design.
+
 ---
 
 ## The promotion gate
