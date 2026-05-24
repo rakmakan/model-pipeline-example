@@ -1,5 +1,16 @@
 {
   "active": null,
-  "models": {},
+  "models": {
+    "v1": {
+      "version": "v1",
+      "status": "candidate",
+      "data_version": "v1",
+      "artifact_path": "models/v1",
+      "eval_report_path": null,
+      "created_at": "2026-05-24T14:41:16",
+      "promoted_at": null,
+      "promotion_gate": null
+    }
+  },
   "history": []
 }
