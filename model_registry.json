@@ -23,6 +23,16 @@
         "replay_version": null,
         "promoted_at": "2026-05-24T14:47:52"
       }
+    },
+    "v2": {
+      "version": "v2",
+      "status": "candidate",
+      "data_version": "v2",
+      "artifact_path": "models/v2",
+      "eval_report_path": "reports/eval_v2.json",
+      "created_at": "2026-05-24T14:52:16",
+      "promoted_at": null,
+      "promotion_gate": null
     }
   },
   "history": []
