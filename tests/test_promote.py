@@ -25,14 +25,15 @@ def _make_predictions(n_legit: int, n_fraud: int, active_fp: int, active_tp: int
 
 
 def test_all_conditions_pass_returns_promote():
-    """Candidate improves recall (0.75→0.875), FPR increase 7pp (within 10pp guardrail) → PROMOTE."""
-    # 210 legit, 40 fraud
-    # Active: 10 FP (FPR=0.048), 30 TP (recall=0.75)
-    # Candidate: 25 FP (FPR=0.119), 35 TP (recall=0.875)
+    """Candidate improves recall (0.70→0.94), FPR increase 6.7pp (within 10pp guardrail) → PROMOTE.
+
+    300 legit, 50 fraud. Active: FP=5 (FPR=0.017), TP=35 (recall=0.70).
+    Candidate: FP=25 (FPR=0.083), TP=47 (recall=0.94). Produces 32 disagreements >= MIN_DISAGREEMENTS=30.
+    """
     y_true, y_pred_active, y_pred_cand = _make_predictions(
-        n_legit=210, n_fraud=40,
-        active_fp=10, active_tp=30,
-        cand_fp=25, cand_tp=35,
+        n_legit=300, n_fraud=50,
+        active_fp=5, active_tp=35,
+        cand_fp=25, cand_tp=47,
     )
     result = run_gate(y_true, y_pred_active, y_pred_cand)
     assert result.verdict == "PROMOTE", f"Expected PROMOTE, got {result.verdict}\n{result}"
@@ -42,13 +43,15 @@ def test_all_conditions_pass_returns_promote():
 
 
 def test_fpr_guardrail_exceeded_returns_reject():
-    """Candidate improves recall but FPR increase 13pp exceeds 10pp guardrail → REJECT on C2."""
-    # Active: 10 FP (FPR=0.048), 30 TP (recall=0.75)
-    # Candidate: 37 FP (FPR=0.176), 38 TP (recall=0.95) — 12.8pp FPR increase
+    """Candidate improves recall but FPR increase 16.7pp exceeds 10pp guardrail → REJECT on C2.
+
+    300 legit, 50 fraud. Active: FP=5 (FPR=0.017), TP=35 (recall=0.70).
+    Candidate: FP=55 (FPR=0.183), TP=47 (recall=0.94). Produces 62 disagreements >= 30.
+    """
     y_true, y_pred_active, y_pred_cand = _make_predictions(
-        n_legit=210, n_fraud=40,
-        active_fp=10, active_tp=30,
-        cand_fp=37, cand_tp=38,
+        n_legit=300, n_fraud=50,
+        active_fp=5, active_tp=35,
+        cand_fp=55, cand_tp=47,
     )
     result = run_gate(y_true, y_pred_active, y_pred_cand)
     assert result.verdict == "REJECT"
