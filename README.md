@@ -10,6 +10,16 @@ A binary classifier that scores incoming job applications and flags fraudulent i
 
 ---
 
+## Design evolution from stage 1
+
+The stage 1 design doc treated FP cost as dominant — falsely blocking a genuine candidate was framed as the primary risk, so FPR was the gate's primary signal and the retraining trigger. During the stage 1 review, Jonathan pushed back on this: in a fraud detection context, a missed fraudulent identity advances through the entire hiring pipeline under a false persona, whereas a genuine candidate who is incorrectly flagged can be reviewed and reinstated. The downstream consequences are asymmetric in the other direction.
+
+That feedback changed the design. In this implementation, **recall is the primary signal** throughout: the gate's first condition is that the candidate's recall must meet or exceed the active model's recall and clear an absolute floor of 0.80; retraining triggers on recall drop, not FPR rise; and the threshold is set by finding the lowest value that achieves the target recall on the validation set. FPR is a guardrail — the candidate must not increase it by more than 10 percentage points — but it is not the primary criterion.
+
+The updated design doc (`closed-loop-retraining-design.md`) reflects this change throughout.
+
+---
+
 ## What I changed from the starter, and why
 
 The starter had three problems worth naming:
