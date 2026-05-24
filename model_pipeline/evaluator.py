@@ -27,10 +27,13 @@ def _metrics(y_true: pd.Series, y_proba: np.ndarray, threshold: float) -> dict:
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
     try:
         auc = float(roc_auc_score(y_true, y_proba))
+        if np.isnan(auc):
+            logger.warning("AUC is NaN — only one class present in y_true")
+            auc = None
     except ValueError as e:
         logger.warning("AUC could not be computed: %s", e)
         auc = None
-    return {"recall": round(recall, 4), "fpr": round(fpr, 4), "precision": round(precision, 4), "f1": round(f1, 4), "auc": round(auc, 4) if auc else None}
+    return {"recall": round(recall, 4), "fpr": round(fpr, 4), "precision": round(precision, 4), "f1": round(f1, 4), "auc": round(auc, 4) if auc is not None else None}
 
 
 def run(model_version: str, replay_version: str) -> dict:
