@@ -52,6 +52,12 @@ model_registry.json       # model version index — status and pointers only
 ## Setup
 
 ```bash
+uv sync
+```
+
+This creates `.venv` and installs all dependencies from `uv.lock`. Requires [uv](https://docs.astral.sh/uv/). Without uv:
+
+```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
