@@ -78,6 +78,11 @@ def run(model_version: str, replay_version: str) -> dict:
     logger.debug("Report written to %s", report_path)
 
     registry["models"][model_version]["eval_report_path"] = str(report_path)
+    registry["models"][model_version]["replay_metrics"] = {
+        "recall": replay_metrics["recall"],
+        "fpr": replay_metrics["fpr"],
+        "auc": replay_metrics["auc"],
+    }
     with open(MODEL_REGISTRY_PATH, "w") as f:
         json.dump(registry, f, indent=2)
 

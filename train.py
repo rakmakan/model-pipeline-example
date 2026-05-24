@@ -99,12 +99,17 @@ def _register_candidate(version: str, data_version: str, artifact_path: Path) ->
     if version in registry["models"]:
         raise ValueError(f"Model version {version} already exists in registry.")
 
+    data_registry = json.loads(Path("data_registry.json").read_text())
+    data_hash = data_registry["versions"][data_version]["data_hash"]
+
     registry["models"][version] = {
         "version": version,
         "status": "candidate",
         "data_version": data_version,
+        "data_hash": data_hash,
         "artifact_path": str(artifact_path),
         "eval_report_path": None,
+        "replay_metrics": None,
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "promoted_at": None,
         "promotion_gate": None,
