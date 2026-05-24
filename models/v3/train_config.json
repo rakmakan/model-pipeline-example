@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "LogisticRegression",
+    "hyperparameters": {
+      "max_iter": 1000,
+      "solver": "lbfgs",
+      "class_weight": "balanced"
+    }
+  },
+  "preprocessor": {
+    "type": "StandardScaler"
+  },
+  "training": {
+    "split_seed": 42,
+    "target_recall": 0.8
+  },
+  "_data_version": "v1",
+  "_model_version": "v3"
+}

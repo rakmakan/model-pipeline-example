@@ -1,7 +1,7 @@
 {
   "model_class_name": "LogisticRegressionModel",
   "schema_version": "v1",
-  "data_version": "v2",
+  "data_version": "v1",
   "features": [
     "application_completion_seconds",
     "hour_of_day",
@@ -13,5 +13,5 @@
     "profile_trust_score"
   ],
   "threshold": 0.05,
-  "created_at": "2026-05-24T15:22:43"
+  "created_at": "2026-05-24T15:33:37"
 }
