@@ -82,7 +82,7 @@ def test_load_train_returns_features_and_label(tmp_registries, tiny_df, tmp_path
 def test_load_val_returns_correct_shape(tmp_registries, tiny_df, tmp_path):
     tiny_df.to_csv(tmp_path / "input.csv", index=False)
     run(str(tmp_path / "input.csv"), version="v1")
-    X_val, y_val = load_val("v1")
+    X_val, _ = load_val("v1")
     X_test, _ = load_test("v1")
     assert len(X_val) > 0
     assert len(X_test) > 0
@@ -90,7 +90,7 @@ def test_load_val_returns_correct_shape(tmp_registries, tiny_df, tmp_path):
     assert abs(len(X_train) + len(X_val) + len(X_test) - len(tiny_df)) <= 1
 
 
-def test_load_missing_version_raises(tmp_registries, tmp_path):
+def test_load_missing_version_raises(tmp_registries):
     with pytest.raises(FileNotFoundError):
         load_train("v99")
 
