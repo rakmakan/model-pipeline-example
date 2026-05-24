@@ -1,4 +1,8 @@
+import logging
+
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 SCHEMAS = {
     "v1": {
@@ -20,12 +24,18 @@ LATEST_SCHEMA = "v1"
 def detect_schema_version(df: pd.DataFrame) -> str:
     for version, schema in SCHEMAS.items():
         if set(schema.keys()) == set(df.columns):
+            logger.debug("Detected schema version %s (exact match)", version)
             return version
-    cols = set(df.columns)
     for version, schema in SCHEMAS.items():
-        expected = set(schema.keys())
-        if expected.issubset(cols):
+        if set(schema.keys()).issubset(set(df.columns)):
+            logger.warning(
+                "No exact schema match — falling back to %s (subset match). "
+                "Extra columns: %s",
+                version,
+                sorted(set(df.columns) - set(schema.keys())),
+            )
             return version
+    logger.warning("No schema matched columns %s — defaulting to %s", sorted(df.columns), LATEST_SCHEMA)
     return LATEST_SCHEMA
 
 

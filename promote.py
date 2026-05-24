@@ -9,6 +9,7 @@ Usage:
 """
 import argparse
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -17,10 +18,12 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2
 
+from logging_config import setup_logging
 from model_pipeline.loader import get_threshold, load_model
 from replay_pipeline.reader import load_replay
 
 MODEL_REGISTRY_PATH = Path("model_registry.json")
+logger = logging.getLogger(__name__)
 RECALL_FLOOR = 0.80
 FPR_GUARDRAIL = 0.10
 MCNEMAR_P_THRESHOLD = 0.05
@@ -191,10 +194,11 @@ def _do_promote(candidate_version: str, active_version: str, replay_version: str
     with open(MODEL_REGISTRY_PATH, "w") as f:
         json.dump(registry, f, indent=2)
 
-    print(f"\nPromoted {candidate_version} → active. Previous active ({active_version}) → history.")
+    logger.info("Promoted %s → active. Previous active (%s) → history.", candidate_version, active_version)
 
 
 def main():
+    setup_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--replay-version", default=None)
@@ -208,43 +212,49 @@ def main():
 
     entry = registry["models"].get(args.candidate)
     if entry is None:
-        raise SystemExit(f"Candidate {args.candidate} not in model_registry.json. Run train.py first.")
+        logger.error("Candidate %s not in model_registry.json. Run train.py first.", args.candidate)
+        raise SystemExit(1)
 
     if entry.get("eval_report_path") is None and not args.bootstrap:
-        raise SystemExit(
-            f"Candidate {args.candidate} has no eval report. Run:\n"
-            f"  python evaluate.py --model-version {args.candidate} --replay-version <version>"
+        logger.error(
+            "Candidate %s has no eval report. Run: python evaluate.py --model-version %s --replay-version <version>",
+            args.candidate, args.candidate,
         )
+        raise SystemExit(1)
 
     if args.bootstrap:
         if args.promote:
             _do_promote(args.candidate, active_version=None, replay_version=None,
                        result=GateResult("BOOTSTRAP", True, True, True, 0, 0, 0, 0, 0, 0, None, 0, 0, ""))
-            print(f"Bootstrap promoted {args.candidate} as initial active model.")
+            logger.info("Bootstrap promoted %s as initial active model.", args.candidate)
         else:
-            print(f"Bootstrap mode: {args.candidate} would be set as initial active model. Rerun with --promote to execute.")
+            logger.info("Bootstrap mode: %s would be set as initial active model. Rerun with --promote to execute.", args.candidate)
         return
 
     active_version = registry.get("active")
     if active_version is None:
-        raise SystemExit("No active model found. Use --bootstrap to promote the first model.")
+        logger.error("No active model found. Use --bootstrap to promote the first model.")
+        raise SystemExit(1)
 
     artifact_path = Path(f"models/{args.candidate}")
     metadata = json.loads((artifact_path / "metadata.json").read_text())
     if metadata.get("threshold") is None:
-        raise SystemExit(
-            f"Candidate {args.candidate} has no threshold. Run:\n"
-            f"  python validate.py --model-version {args.candidate}"
+        logger.error(
+            "Candidate %s has no threshold. Run: python validate.py --model-version %s",
+            args.candidate, args.candidate,
         )
+        raise SystemExit(1)
 
     replay_version = args.replay_version
     if replay_version is None:
         dr = json.loads(Path("data_registry.json").read_text())
         replay_version = dr.get("replay", {}).get("latest")
         if replay_version is None:
-            raise SystemExit("No replay version found. Run run_replay_pipe.py first.")
-        print(f"Using latest replay version: {replay_version}")
+            logger.error("No replay version found. Run run_replay_pipe.py first.")
+            raise SystemExit(1)
+        logger.info("Using latest replay version: %s", replay_version)
 
+    logger.info("Running gate: candidate=%s active=%s replay=%s", args.candidate, active_version, replay_version)
     X_replay, y_replay, replay_meta = load_replay(replay_version)
 
     active_model = load_model(active_version)
@@ -260,7 +270,8 @@ def main():
 
     if args.promote:
         if result.verdict != "PROMOTE":
-            raise SystemExit(f"\nCannot promote: gate did not pass. Verdict: {result.verdict}")
+            logger.error("Cannot promote: gate did not pass. Verdict: %s. Reason: %s", result.verdict, result.failure_reason)
+            raise SystemExit(1)
         _do_promote(args.candidate, active_version, replay_version, result)
 
 

@@ -9,6 +9,7 @@ Usage:
 import argparse
 import inspect
 import json
+import logging
 import pickle
 import shutil
 from datetime import datetime
@@ -19,11 +20,13 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 from data_pipeline.reader import FEATURES, load_train
+from logging_config import setup_logging
 from model_pipeline.base_model import BaseModel
 from model_pipeline.config import load_and_validate
 from model_pipeline.preprocessor import Preprocessor
 
 MODEL_REGISTRY_PATH = Path("model_registry.json")
+logger = logging.getLogger(__name__)
 
 
 class LogisticRegressionModel(BaseModel):
@@ -112,6 +115,7 @@ def _register_candidate(version: str, data_version: str, artifact_path: Path) ->
 
 
 def main():
+    setup_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-version", help="Data version from data_registry.json")
     parser.add_argument("--model-version", help="Version name for the new model artifact")
@@ -136,15 +140,18 @@ def main():
     with open(MODEL_REGISTRY_PATH) as f:
         registry = json.load(f)
     if model_version in registry["models"]:
-        raise SystemExit(f"Model version {model_version} already exists in registry. Choose a different --model-version.")
+        logger.error("Model version %s already exists in registry. Choose a different --model-version.", model_version)
+        raise SystemExit(1)
 
     X_train, y_train = load_train(data_version)
     fraud_rate = y_train.mean()
-    print(f"Training data: {len(X_train)} rows, {fraud_rate:.3%} fraud")
+    logger.info("Training data: %d rows, %.3f%% fraud (data=%s)", len(X_train), fraud_rate * 100, data_version)
 
     hparams = config["model"]["hyperparameters"]
+    logger.debug("Training %s with hyperparameters: %s", config["model"]["type"], hparams)
     model = LogisticRegressionModel(hparams)
     model.fit(X_train, y_train)
+    logger.debug("Training complete")
 
     artifact_path = Path(f"models/{model_version}")
     config_snapshot = dict(config)
@@ -153,9 +160,9 @@ def main():
     _pack_artifact(model, artifact_path, data_version, config_snapshot)
     _register_candidate(model_version, data_version, artifact_path)
 
-    print(f"Packed artifact → {artifact_path}")
-    print(f"Registered {model_version} as candidate in model_registry.json")
-    print(f"Next step: python validate.py --model-version {model_version}")
+    logger.info("Packed artifact → %s", artifact_path)
+    logger.info("Registered %s as candidate in model_registry.json", model_version)
+    logger.info("Next step: python validate.py --model-version %s", model_version)
 
 
 if __name__ == "__main__":

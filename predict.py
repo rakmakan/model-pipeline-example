@@ -5,6 +5,7 @@ Usage:
     python predict.py
 """
 import json
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -12,6 +13,7 @@ import pandas as pd
 from model_pipeline.loader import get_features, get_threshold, load_model
 
 MODEL_REGISTRY_PATH = Path("model_registry.json")
+logger = logging.getLogger(__name__)
 
 
 def score(application: dict) -> dict:
@@ -22,21 +24,26 @@ def score(application: dict) -> dict:
     if active_version is None:
         raise RuntimeError("No active model. Run promote.py --bootstrap first.")
 
+    logger.debug("Loading active model %s", active_version)
     model = load_model(active_version)
     threshold = get_threshold(active_version)
     features = get_features(active_version)
 
     X = pd.DataFrame([application])[features]
     proba = float(model.predict_proba(X)[0])
+    decision = "block" if proba >= threshold else "allow"
+    logger.debug("score=%.4f threshold=%s decision=%s model=%s", proba, threshold, decision, active_version)
     return {
         "model_version": active_version,
         "score": proba,
         "threshold": threshold,
-        "decision": "block" if proba >= threshold else "allow",
+        "decision": decision,
     }
 
 
 if __name__ == "__main__":
+    from logging_config import setup_logging
+    setup_logging()
     sample = {
         "application_completion_seconds": 45.0,
         "hour_of_day": 3,

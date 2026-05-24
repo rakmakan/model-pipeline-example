@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -6,6 +7,8 @@ import pandas as pd
 
 from data_pipeline.reader import load_val
 from model_pipeline.loader import load_model
+
+logger = logging.getLogger(__name__)
 
 
 def find_threshold(y_true: pd.Series, y_proba: np.ndarray, target_recall: float) -> float | None:
@@ -33,9 +36,11 @@ def run(model_version: str, model_registry_path: Path = Path("model_registry.jso
     config = json.loads((artifact_path / "train_config.json").read_text())
     target_recall = config["training"]["target_recall"]
 
+    logger.info("Scoring val set for model %s (data=%s)", model_version, data_version)
     model = load_model(model_version)
     X_val, y_val = load_val(data_version)
     y_proba = model.predict_proba(X_val)
+    logger.debug("Val set: %d rows, %d fraud", len(y_val), y_val.sum())
 
     threshold = find_threshold(y_val, y_proba, target_recall)
 
@@ -59,5 +64,5 @@ def run(model_version: str, model_registry_path: Path = Path("model_registry.jso
     metadata["threshold"] = threshold
     (artifact_path / "metadata.json").write_text(json.dumps(metadata, indent=2))
 
-    print(f"Threshold set to {threshold} (achieves recall ≥ {target_recall} on val set)")
+    logger.info("Threshold set to %s (achieves recall ≥ %s on val set)", threshold, target_recall)
     return threshold

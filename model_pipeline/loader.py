@@ -1,9 +1,12 @@
 import importlib.util
 import json
+import logging
 import sys
 from pathlib import Path
 
 from model_pipeline.base_model import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 def load_model(version: str) -> BaseModel:
@@ -11,8 +14,10 @@ def load_model(version: str) -> BaseModel:
     if not artifact_path.exists():
         raise FileNotFoundError(f"Artifact not found: {artifact_path}. Run train.py first.")
 
+    logger.debug("Loading artifact from %s", artifact_path)
     metadata = json.loads((artifact_path / "metadata.json").read_text())
     class_name = metadata["model_class_name"]
+    logger.debug("Instantiating %s from artifact snapshot", class_name)
 
     sys.path.insert(0, str(artifact_path))
     try:
@@ -27,6 +32,7 @@ def load_model(version: str) -> BaseModel:
 
     model = ModelClass.load(artifact_path)
     model._metadata = metadata
+    logger.debug("Loaded model %s (schema=%s, data=%s)", version, metadata.get("schema_version"), metadata.get("data_version"))
     return model
 
 

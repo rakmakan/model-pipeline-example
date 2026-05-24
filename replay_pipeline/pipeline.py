@@ -1,9 +1,12 @@
 import hashlib
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 DATA_REGISTRY_PATH = Path("data_registry.json")
 FEATURES = [
@@ -38,16 +41,29 @@ def run(predictions_path: str, feedback_path: str, version: str | None = None) -
     predictions_path = Path(predictions_path)
     feedback_path = Path(feedback_path)
 
+    logger.info("Loading predictions from %s", predictions_path)
     predictions = pd.read_csv(predictions_path)
+    logger.info("Loading feedback from %s", feedback_path)
     feedback = pd.read_csv(feedback_path)
 
     df = predictions.merge(feedback, on="prediction_id", how="inner")
+    logger.debug("Joined %d predictions to %d feedback rows → %d matches", len(predictions), len(feedback), len(df))
+
+    unclear_count = (df["verdict"] == "unclear").sum()
+    if unclear_count:
+        logger.warning("Dropping %d 'unclear' verdicts", unclear_count)
     df = df[df["verdict"] != "unclear"].copy()
     df["label"] = (df["verdict"] == "fraud").astype(int)
 
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     date_range = [df["timestamp"].min(), df["timestamp"].max()]
     weeks_spanned = (date_range[1] - date_range[0]).days / 7
+
+    logger.debug(
+        "Replay dataset: %d rows, %d fraud, %.1f weeks (%s – %s)",
+        len(df), df["label"].sum(), weeks_spanned,
+        date_range[0].date(), date_range[1].date(),
+    )
 
     errors = []
     if len(df) < MIN_ROWS:
@@ -93,5 +109,9 @@ def run(predictions_path: str, feedback_path: str, version: str | None = None) -
     with open(DATA_REGISTRY_PATH, "w") as f:
         json.dump(registry, f, indent=2)
 
-    print(f"Created replay version {version}: {len(replay_df)} rows, {meta['fraud_rows']} fraud, {weeks_spanned:.1f} weeks")
+    logger.info(
+        "Created replay version %s: %d rows, %d fraud (%.1f%%), %.1f weeks",
+        version, len(replay_df), meta["fraud_rows"],
+        meta["fraud_rows"] / len(replay_df) * 100, weeks_spanned,
+    )
     return version

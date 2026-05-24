@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -7,6 +8,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from data_pipeline.schema import detect_schema_version, validate
+
+logger = logging.getLogger(__name__)
 
 DATA_REGISTRY_PATH = Path("data_registry.json")
 SPLIT_SEED = 42
@@ -29,15 +32,20 @@ def _next_version(registry: dict) -> str:
 
 def run(input_path: str, version: str | None = None) -> str:
     input_path = Path(input_path)
+    logger.info("Loading %s", input_path)
     df = pd.read_csv(input_path)
+    logger.debug("Loaded %d rows, %d columns", len(df), len(df.columns))
+
     schema_version = detect_schema_version(df)
     validate(df, schema_version)
+    logger.debug("Schema validation passed (version=%s)", schema_version)
 
     with open(DATA_REGISTRY_PATH) as f:
         registry = json.load(f)
 
     if version is None:
         version = _next_version(registry)
+        logger.debug("Auto-assigned data version %s", version)
 
     if version in registry["versions"]:
         raise ValueError(f"Data version {version} already exists in registry.")
@@ -51,6 +59,7 @@ def run(input_path: str, version: str | None = None) -> str:
 
     for split_name, split_df in [("train", train), ("val", val), ("test", test)]:
         split_df.to_csv(out_dir / f"{split_name}.csv", index=False)
+        logger.debug("Wrote %s (%d rows)", out_dir / f"{split_name}.csv", len(split_df))
 
     registry["versions"][version] = {
         "version": version,
@@ -71,5 +80,9 @@ def run(input_path: str, version: str | None = None) -> str:
     with open(DATA_REGISTRY_PATH, "w") as f:
         json.dump(registry, f, indent=2)
 
-    print(f"Created data version {version}: {len(train)} train / {len(val)} val / {len(test)} test")
+    logger.info(
+        "Created data version %s: %d train / %d val / %d test (fraud rate: train=%.1f%%, val=%.1f%%, test=%.1f%%)",
+        version, len(train), len(val), len(test),
+        train["label"].mean() * 100, val["label"].mean() * 100, test["label"].mean() * 100,
+    )
     return version

@@ -6,9 +6,12 @@ Usage:
     python run_data_pipe.py --input data/raw/applications_v2.csv --version v2
 """
 import argparse
+
 from data_pipeline.pipeline import run
+from logging_config import setup_logging
 
 if __name__ == "__main__":
+    setup_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, help="Path to raw CSV")
     parser.add_argument("--version", default=None, help="Version name (auto-increments if omitted)")
