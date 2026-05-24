@@ -1,15 +1,28 @@
 {
-  "active": null,
+  "active": "v1",
   "models": {
     "v1": {
       "version": "v1",
-      "status": "candidate",
+      "status": "active",
       "data_version": "v1",
       "artifact_path": "models/v1",
       "eval_report_path": "reports/eval_v1.json",
       "created_at": "2026-05-24T14:41:16",
-      "promoted_at": null,
-      "promotion_gate": null
+      "promoted_at": "2026-05-24T14:47:52",
+      "promotion_gate": {
+        "verdict": "BOOTSTRAP",
+        "c1_pass": true,
+        "c2_pass": true,
+        "c3_pass": true,
+        "active_recall": 0,
+        "active_fpr": 0,
+        "candidate_recall": 0,
+        "candidate_fpr": 0,
+        "p_value": null,
+        "n_examples": 0,
+        "replay_version": null,
+        "promoted_at": "2026-05-24T14:47:52"
+      }
     }
   },
   "history": []
