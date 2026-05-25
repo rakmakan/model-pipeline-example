@@ -9,6 +9,15 @@ from data_pipeline.reader import load_val
 from model_pipeline.loader import load_model
 
 logger = logging.getLogger(__name__)
+_EMPTY_MODEL_REGISTRY = {"active": None, "models": {}, "history": []}
+
+
+def _load_model_registry(path: Path) -> dict:
+    if not path.exists():
+        logger.info("%s not found — initializing empty registry", path)
+        path.write_text(json.dumps(_EMPTY_MODEL_REGISTRY, indent=2))
+        return {k: v for k, v in _EMPTY_MODEL_REGISTRY.items()}
+    return json.loads(path.read_text())
 
 
 def find_threshold(y_true: pd.Series, y_proba: np.ndarray, target_recall: float) -> float | None:
@@ -24,8 +33,7 @@ def find_threshold(y_true: pd.Series, y_proba: np.ndarray, target_recall: float)
 
 
 def run(model_version: str, model_registry_path: Path = Path("model_registry.json")) -> float:
-    with open(model_registry_path) as f:
-        registry = json.load(f)
+    registry = _load_model_registry(model_registry_path)
 
     entry = registry["models"].get(model_version)
     if entry is None:

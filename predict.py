@@ -13,12 +13,20 @@ import pandas as pd
 from model_pipeline.loader import get_features, get_threshold, load_model
 
 MODEL_REGISTRY_PATH = Path("model_registry.json")
+_EMPTY_MODEL_REGISTRY = {"active": None, "models": {}, "history": []}
 logger = logging.getLogger(__name__)
 
 
+def _load_model_registry() -> dict:
+    if not MODEL_REGISTRY_PATH.exists():
+        logger.info("model_registry.json not found — initializing empty registry")
+        MODEL_REGISTRY_PATH.write_text(json.dumps(_EMPTY_MODEL_REGISTRY, indent=2))
+        return {k: v for k, v in _EMPTY_MODEL_REGISTRY.items()}
+    return json.loads(MODEL_REGISTRY_PATH.read_text())
+
+
 def score(application: dict) -> dict:
-    with open(MODEL_REGISTRY_PATH) as f:
-        registry = json.load(f)
+    registry = _load_model_registry()
 
     active_version = registry.get("active")
     if active_version is None:

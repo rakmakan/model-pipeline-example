@@ -26,7 +26,16 @@ from model_pipeline.config import load_and_validate
 from model_pipeline.preprocessor import Preprocessor
 
 MODEL_REGISTRY_PATH = Path("model_registry.json")
+_EMPTY_MODEL_REGISTRY = {"active": None, "models": {}, "history": []}
 logger = logging.getLogger(__name__)
+
+
+def _load_model_registry() -> dict:
+    if not MODEL_REGISTRY_PATH.exists():
+        logger.info("model_registry.json not found — initializing empty registry")
+        MODEL_REGISTRY_PATH.write_text(json.dumps(_EMPTY_MODEL_REGISTRY, indent=2))
+        return {k: v for k, v in _EMPTY_MODEL_REGISTRY.items()}
+    return json.loads(MODEL_REGISTRY_PATH.read_text())
 
 
 class LogisticRegressionModel(BaseModel):
@@ -93,8 +102,7 @@ def _pack_artifact(model: LogisticRegressionModel, artifact_path: Path, data_ver
 
 
 def _register_candidate(version: str, data_version: str, artifact_path: Path) -> None:
-    with open(MODEL_REGISTRY_PATH) as f:
-        registry = json.load(f)
+    registry = _load_model_registry()
 
     if version in registry["models"]:
         raise ValueError(f"Model version {version} already exists in registry.")
@@ -142,8 +150,7 @@ def main():
         config = load_and_validate(config_path)
 
     # Guard before touching disk — fail fast if version already registered.
-    with open(MODEL_REGISTRY_PATH) as f:
-        registry = json.load(f)
+    registry = _load_model_registry()
     if model_version in registry["models"]:
         logger.error("Model version %s already exists in registry. Choose a different --model-version.", model_version)
         raise SystemExit(1)

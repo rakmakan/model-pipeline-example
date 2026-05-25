@@ -10,6 +10,15 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 DATA_REGISTRY_PATH = Path("data_registry.json")
+_EMPTY_REGISTRY = {"latest": None, "versions": {}, "replay": {"latest": None, "versions": {}}}
+
+
+def _load_registry() -> dict:
+    if not DATA_REGISTRY_PATH.exists():
+        logger.info("data_registry.json not found — initializing empty registry")
+        DATA_REGISTRY_PATH.write_text(json.dumps(_EMPTY_REGISTRY, indent=2))
+        return {k: v for k, v in _EMPTY_REGISTRY.items()}
+    return json.loads(DATA_REGISTRY_PATH.read_text())
 FEATURES = [
     "application_completion_seconds",
     "hour_of_day",
@@ -96,8 +105,7 @@ def run(predictions_path: str, feedback_path: str, version: str | None = None) -
     )
 
     # Load registry early — needed to derive dynamic minimum from training fraud rate
-    with open(DATA_REGISTRY_PATH) as f:
-        registry = json.load(f)
+    registry = _load_registry()
 
     # Derive minimum rows from training class ratio; fall back to fixed floor if no training data exists
     latest_data = registry.get("latest")

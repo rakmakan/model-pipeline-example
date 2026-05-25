@@ -13,6 +13,15 @@ logger = logging.getLogger(__name__)
 
 DATA_REGISTRY_PATH = Path("data_registry.json")
 SPLIT_SEED = 42
+_EMPTY_REGISTRY = {"latest": None, "versions": {}, "replay": {"latest": None, "versions": {}}}
+
+
+def _load_registry() -> dict:
+    if not DATA_REGISTRY_PATH.exists():
+        logger.info("data_registry.json not found — initializing empty registry")
+        DATA_REGISTRY_PATH.write_text(json.dumps(_EMPTY_REGISTRY, indent=2))
+        return {k: v for k, v in _EMPTY_REGISTRY.items()}
+    return json.loads(DATA_REGISTRY_PATH.read_text())
 SPLIT_RATIOS = (0.70, 0.15, 0.15)
 
 
@@ -40,8 +49,7 @@ def run(input_path: str, version: str | None = None) -> str:
     validate(df, schema_version)
     logger.debug("Schema validation passed (version=%s)", schema_version)
 
-    with open(DATA_REGISTRY_PATH) as f:
-        registry = json.load(f)
+    registry = _load_registry()
 
     if version is None:
         version = _next_version(registry)

@@ -23,6 +23,7 @@ from model_pipeline.loader import get_threshold, load_model
 from replay_pipeline.reader import load_replay
 
 MODEL_REGISTRY_PATH = Path("model_registry.json")
+_EMPTY_MODEL_REGISTRY = {"active": None, "models": {}, "history": []}
 logger = logging.getLogger(__name__)
 RECALL_FLOOR = 0.80
 FPR_GUARDRAIL = 0.10
@@ -159,6 +160,14 @@ def _print_gate_report(candidate_version: str, active_version: str, replay_versi
         print(f"Reason : {result.failure_reason}")
 
 
+def _load_model_registry() -> dict:
+    if not MODEL_REGISTRY_PATH.exists():
+        logger.info("model_registry.json not found — initializing empty registry")
+        MODEL_REGISTRY_PATH.write_text(json.dumps(_EMPTY_MODEL_REGISTRY, indent=2))
+        return {k: v for k, v in _EMPTY_MODEL_REGISTRY.items()}
+    return json.loads(MODEL_REGISTRY_PATH.read_text())
+
+
 def _do_promote(candidate_version: str, active_version: str, replay_version: str, result: GateResult) -> None:
     with open(MODEL_REGISTRY_PATH) as f:
         registry = json.load(f)
@@ -207,8 +216,7 @@ def main():
                         help="Promote first model without running the gate (no active model to compare against)")
     args = parser.parse_args()
 
-    with open(MODEL_REGISTRY_PATH) as f:
-        registry = json.load(f)
+    registry = _load_model_registry()
 
     entry = registry["models"].get(args.candidate)
     if entry is None:
