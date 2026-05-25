@@ -67,8 +67,13 @@
     "versions": {
       "v1": {
         "path": "data/replay/v1/replay.csv",
-        "rows": 1829,
-        "fraud_rows": 145,
+        "rows": 1745,
+        "fraud_rows": 61,
+        "fraud_rate": 0.035,
+        "raw_rows": 1829,
+        "raw_fraud_rows": 145,
+        "training_data_version": "v2",
+        "training_fraud_rate": 0.035,
         "date_range": [
           "2025-09-01T01:16:00",
           "2025-11-21T15:39:00"
@@ -78,7 +83,7 @@
           "predictions_hash": "sha256:aeeadbb3845f68f1",
           "feedback_hash": "sha256:5f90aeb822611df5"
         },
-        "created_at": "2026-05-24T14:36:47"
+        "created_at": "2026-05-24T19:12:55"
       }
     }
   }

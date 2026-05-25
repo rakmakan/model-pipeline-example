@@ -25,9 +25,9 @@
       },
       "data_hash": "sha256:9d8f927f900ac0c4",
       "replay_metrics": {
-        "recall": 0.4828,
+        "recall": 0.5738,
         "fpr": 0.0042,
-        "auc": 0.7412
+        "auc": 0.774
       }
     },
     "v2": {
@@ -41,9 +41,9 @@
       "promotion_gate": null,
       "data_hash": "sha256:c8440be6fa6a0159",
       "replay_metrics": {
-        "recall": 0.4828,
+        "recall": 0.5738,
         "fpr": 0.0048,
-        "auc": 0.7462
+        "auc": 0.7827
       }
     },
     "v3": {
