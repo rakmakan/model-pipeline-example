@@ -1,0 +1,100 @@
+
+Hey Jonathan, uh, thank you for the assignment, uhm, I totally enjoyed while doing it, and, uh, yeah, uh, I'm going to explain to you what exactly I did, uh, in next five minutes I'll try to compress it To start with, uh, the challenge looked very straightforward, uh, it asked me to build the training
+00:31
+
+and registration pipeline with the promotion gates, uh, it's exactly what we discussed in the stage one, and I tried to stay true to the design that I provided you, uh, that I provided you in the stage one with the changes that we discussed.
+00:48
+Uh, changing it from the FBR-based system to the recall-based system, uh, where we are more concerned about not letting a fraud candidate move forward, uh, it's fine to have false positives, uh, we can, and the system can basically, uh, basically learn from that and we will have less false positives.
+01:12
+over time, but the main idea is not letting the, uh, fraud candidate move forward, so that's why the, I shifted the, to the recall-based system.
+01:25
+Okay, uh, so to start with, uh, uh, I transformed the whole code to proper design okay so you will find in this code is a data pipeline, uh, which takes in the, uh, raw data that you provided so v1, v2, let's say, and it converts into the, uh, into the test train and well and the data gets stratified
+01:55
+there and, uh, we have already defined the ratio of like, Gah. Uh, so 75% goes into the train, 15% into well, 15% into the train and the fraud and, uh, non-fraud samples are basically getting divided, uh, equally in all three cases.
+02:19
+Okay, uh, so the next, uh, thing is the, uh, feed, uh, so, so, uh, model pipeline. So the model pipeline is, uh, contained.
+02:33
+So how I designed it, I have this base model. This is an abstract, uh, yeah, sorry, it's an abstract, it's an abstract class.
+02:44
+It basically defines all the methods that we need in case we need to switch to the model. Uh, we can use the same abstract class, and, uh, the, uh, our training.py here, uh, where is it, training.py, uh, yeah, so here it is, my training.py, let me put myself aside, uh, training.py here basically loads
+03:08
+that base class and, uh, basically fills all the, all the, all the methods. And, uh, yeah, so we can change into any model, and they will all be called in the same way, so that's why I chose this.
+03:20
+Uh, we have a default config, uh, and we make sure that we check, we validate the config before we process it, so that, uh, we can load the, in the same way in future, uh, and we have, and then I have a loader class.
+03:36
+this is. basically, how we load model, and, uh, I'll come to the part where how we save the model, uh, and then we have our validator pipeline, which help us select the threshold based on the recall, and, uh, last is the, uh, evaluator that basically gives us the, all the metric that we need, a, um,
+03:59
+A U C curve R O C curve recall, uh, recall precision and everything that we need, uh, we, I created a central two repositories, uh, one is the data repository, uh, sorry, data registry and the model registry, uh, which contain all the, uh, all the key, uh, information that we need, the versions, status
+04:23
+, artifacts and everything. Uh, okay, so the idea is simple, so, and one last thing I want to go through is how we are saving models.
+04:35
+So, saving models is, uh, not just saving dot pickle file, but also saving the, uh, the base class, the model class and the, uh, the processor part.
+04:47
+So, so that, like, uh, this. This whole thing act as one container, and then you can run everything at one time.
+04:55
+So, in case in future this training dot py get changed, we get a new model, still we should be able to run the older version of model, because we have all the files, all the necessary files already, already here.
+05:06
+That's, uh, that's what I, what I added, uh, so let me give you a quick, a quick, a quick thing, how, how this whole thing run.
+05:16
+So, I used uv to create environment. So, as you see the environment is already active. I will start with saying Python, let me just pick the command.
+05:28
+So, let's say, uhm, we are going to train a model. So, I'll just tell you are already here. So, I just, for example, you want to publish a new version of the data.
+05:42
+Let's say we we use v, we'll use the v2 and publish v3. So, So, so we run the command and v3, uh, yeah, it's done.
+06:10
+So, it basically gave you some insight and you have model just if you check at the data industry. So, you see the latest version is updated to v3 and you have v1, v2, v3, everything is there.
+06:25
+So, what is the split ratio, everything, uh, you have all the parts and you have the data hash written over here.
+06:34
+Okay, so next thing is, uh, uh, your, how it will be like doing the, so this is how we create the version, replay version.
+06:48
+So, we already have that. We already ran that, so most probably, like, it's going to create a, yeah, it created another version of read2 because we ran the pipeline again, uhm, if I see data version again, so you will see the replay version has been created, version 2, and all those things, okay.
+07:08
+Next thing is training the model. So you pick this let me clear this window, so we published v3, so I take v3 in the account, uhm, let's do v3, and we are going to do v4 of the model, so once that is running, so let's load the model, do thing, register, well, you can see it registered to the registry
+07:37
+, free. You can see registry is updated, so your, so your current model still active is v1, uh, we are added a candidate, uh, v4, okay.
+07:49
+So what registry is telling you is like, what is the version of the model, what's data streamed on, what's the data hash, uh, where the model is saved, and if you see, the model got saved with the whole package.
+08:01
+And this, uh, why we chose this, uh, so like, not just that, like, I tried to add like a training.json, so that you can train the same model again, again, for the reproducibility purpose.
+08:15
+Okay, so once you are done there, you are, so we are going to then find the thresholds, So we'll do simple, like we'll, so send, that's send.
+08:25
+So everything is connected to the model registry, model registry act as a central part. And we are going to do v, uh, v4, uh, it picks the model, scores it, everything.
+08:46
+um yeah um then yeah so if you see the meta.json it should have the threshold yes so threshold threshold is created so it picked the threshold based on the on the uh set is 0.5 so where it achieved the recall of 0.8 and uh yeah now we will do the do the evaluate part, so we'll go evaluate, we'll go to
+09:11
+version 2, order version 4, so gives you a clear understanding of what what's happening here. So your test set is recall is equal to 1.
+09:25
+Um, why so why I think the synthesized data that you shared has a very clear division of uh of from the positive to the negative data set.
+09:38
+So that's why we are getting such a marvelous number over here. Uh, on the replay part on the on the data set that we created, we do.
+09:47
+So we got the recall of this FPR is 0.48. So FPR looks really good to me and, uh, the read is able to reach things.
+09:58
+So, uh, so promotion gate actually will fail, uh, because the recall is below what we, we expect is 0.8. So, which means that we need to improve the model and we are going to improve the model is by changing the config or changing the model, uh, or maybe like setting up the right data, data, data over
+10:21
+there. Okay. Uh, uh, I build is basically the promote thing. So once, so you can, on this, particular, uh, evaluation got saved in eval.json.
+10:31
+So you can see eval.json4. So you can, uh, basically read everything. Okay. Uh, now you have the last thing, the promotion, how we will promote this file.
+10:41
+So I guess, uh, so I ran the wrong version. So we are going to evaluate candidate 4 on the version 2.
+10:51
+Um, here you go. So you can get the clear report. So your candidate 1, active is v1. Replay, we are basically using v2.
+10:59
+Uh, you can see the active one has, so, so active one, so since we haven't changed the model, so, uh, you can see that, uh, uh, the re, the review, the active one is, uh, same, the recall is same, but we got, like, increase in the FBR, so, uh, we got two failures.
+11:25
+So FBR increases, uh, which is within the guardrail, so it's fine for us, but the recall is below, is equal and below, and below the 80 percent, so fail, so, and the mechanism of test also fails, so what it is rejects, so we're not going to promote this model, uh, it's going to allow the human reviewers
+11:45
+for the next round of training. Okay, um, and yes, so, um, so you can use this, so this is basically and I added all the tests But, uh, like, it would be a great idea to add all the tests in this.
+12:31
+So, yeah, so, uh, uh, I went, basically, test all, all the, all the failures, all the, just all the schemas, created the fixtures and everything, and everything is inside there thing.
+12:45
+Uh, everything is documented properly in, uh, README. My explanation is much more not needed. If you read this, I think this will be, uh, more than enough.
+12:56
+Uh, monitoring in production. I added this, uh, from the last, uh, last, uh, this is not built here, but I added for the, for the completeness of the documentation that this is what we also need for the production.
+13:13
+Yeah. Um. Yeah. These are like, uh, again, like repeating what we have discussed in stage one, what was rejected, what was not, um, yeah, uh, that's all.
+13:24
+
+Oh, okay. So this is 30 minutes. Okay.

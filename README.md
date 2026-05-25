@@ -1,6 +1,6 @@
 # Job-Applicant Fraud Detection — Model Pipeline
 
-**Video walkthrough:** _[Loom link — add before submitting]_
+**Video walkthrough:** https://www.loom.com/share/81137f18f47e423b8ba33dc8701a6049
 
 ---
 
